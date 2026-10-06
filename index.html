@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#120b22" />
+  <title>EthOpen Offline</title>
+  <style>
+    :root {
+      --bg: #0b0713;
+      --bg2: #170d2a;
+      --panel: rgba(255,255,255,0.06);
+      --panel-border: rgba(255,255,255,0.14);
+      --text: #f6f2ff;
+      --muted: #c9c1df;
+      --accent: #a78bfa;
+      --accent-2: #7dd3fc;
+      --good: #7ee8a8;
+      --warn: #ffd166;
+      --danger: #fca5a5;
+      --shadow: rgba(0,0,0,0.5);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at 15% 0%, rgba(167, 139, 250, 0.35), transparent 30%),
+        radial-gradient(circle at 100% 100%, rgba(125, 211, 252, 0.25), transparent 30%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      color: var(--text);
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      padding: 24px 16px 64px;
+    }
+
+    .app {
+      width: min(1100px, 100%);
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 4rem);
+      letter-spacing: -0.06em;
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 0 24px rgba(167, 139, 250, 0.75);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      padding: 16px 14px;
+      box-shadow: 0 12px 28px -18px rgba(0,0,0,0.7);
+      text-align: center;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: clamp(1.1rem, 2.5vw, 1.8rem);
+      margin-bottom: 6px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 18px 0 12px;
+    }
+
+    .pill,
+    button {
+      border: 1px solid var(--panel-border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,0.28);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .set-card {
+      position: relative;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      padding: 18px 14px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .set-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(167, 139, 250, 0.7);
+      box-shadow: 0 20px 36px -20px rgba(167,139,250,0.85);
+    }
+
+    .pack-art {
+      width: 120px;
+      aspect-ratio: 0.6;
+      margin: 0 auto 12px;
+      border-radius: 14px;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(180deg, var(--pack-a), var(--pack-b));
+      box-shadow: 0 16px 26px -12px rgba(0,0,0,0.8);
+    }
+
+    .pack-art::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.4), transparent 64%);
+    }
+
+    .pack-art::after {
+      content: "";
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      top: 15%;
+      bottom: 15%;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.35);
+      opacity: 0.8;
+    }
+
+    .pack-name {
+      font-size: 1.02rem;
+      font-weight: 800;
+      margin: 4px 0 2px;
+    }
+
+    .pack-series {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .pack-meta {
+      margin-top: 12px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .open-panel {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      padding: 20px 18px 16px;
+      margin-top: 4px;
+    }
+
+    .open-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .mini {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--panel-border);
+      border-radius: 999px;
+      padding: 8px 14px;
+      color: var(--muted);
+    }
+
+    .mini strong {
+      color: var(--text);
+    }
+
+    .pack-stage {
+      display: grid;
+      place-items: center;
+      min-height: 420px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 20px;
+      background: radial-gradient(circle at center, rgba(167, 139, 250, 0.12), transparent 45%);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .pack-box {
+      width: min(52vw, 220px);
+      aspect-ratio: 0.6;
+      background: linear-gradient(180deg, var(--pack-a), var(--pack-b));
+      border-radius: 18px;
+      position: relative;
+      box-shadow: 0 22px 40px -18px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.12);
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.18s ease;
+      overflow: hidden;
+    }
+
+    .pack-box::before,
+    .pack-box::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+    }
+
+    .pack-box::before {
+      background: linear-gradient(120deg, transparent 36%, rgba(255,255,255,0.3), transparent 64%);
+    }
+
+    .pack-box::after {
+      inset: 12% 10%;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .pack-box .label {
+      position: absolute;
+      left: 14%;
+      right: 14%;
+      bottom: 12%;
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.85);
+      text-shadow: 0 2px 12px rgba(0,0,0,0.45);
+    }
+
+    .pack-box:active {
+      transform: scale(0.98);
+    }
+
+    .card-deck {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      pointer-events: none;
+    }
+
+    .card {
+      width: min(32vw, 170px);
+      aspect-ratio: 0.716;
+      border-radius: 16px;
+      box-shadow: 0 16px 30px rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.12);
+      background-size: cover;
+      background-position: center;
+      position: absolute;
+      transform: translateX(-50%) rotate(var(--rot)) scale(var(--scale));
+      opacity: 0;
+      transition: transform 0.42s ease, opacity 0.28s ease;
+    }
+
+    .card.show {
+      opacity: 1;
+    }
+
+    .card .card-text {
+      position: absolute;
+      inset: auto 12px 12px 12px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(9,8,18,0.52);
+      backdrop-filter: blur(4px);
+      text-align: center;
+      font-weight: 800;
+      font-size: 0.74rem;
+      line-height: 1.2;
+      border: 1px solid rgba(255,255,255,0.09);
+    }
+
+    .status-box {
+      margin-top: 18px;
+      min-height: 64px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+      font-size: 0.98rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .summary-wrap {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    .summary-card {
+      flex: 1 1 240px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .summary-card img {
+      width: min(48vw, 160px);
+      aspect-ratio: 0.716;
+      border-radius: 12px;
+      margin: 12px auto 10px;
+      display: block;
+      box-shadow: 0 18px 30px rgba(0,0,0,0.34);
+    }
+
+    .value {
+      font-size: clamp(1.7rem, 4vw, 2.6rem);
+      font-weight: 900;
+      letter-spacing: -0.06em;
+      color: var(--good);
+      margin: 4px 0 2px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .binder-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 14px;
+      padding-top: 10px;
+    }
+
+    .binder-item {
+      position: relative;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--panel-border);
+      border-radius: 15px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .binder-item img {
+      width: 100%;
+      display: block;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      min-height: 130px;
+      object-fit: cover;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .count-badge {
+      position: absolute;
+      right: -6px;
+      top: -6px;
+      background: var(--accent);
+      color: white;
+      border-radius: 999px;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 0.78rem;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+    }
+
+    .binder-name {
+      font-weight: 800;
+      font-size: 0.82rem;
+      line-height: 1.25;
+    }
+
+    .binder-rarity {
+      margin-top: 4px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 30px 12px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 620px) {
+      .stats { grid-template-columns: 1fr; }
+      .pack-stage { min-height: 340px; }
+      .pack-box { width: min(60vw, 180px); }
+      .binder-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <h1>EthOpen</h1>
+      <button id="resetButton" type="button">Reset progress</button>
+    </header>
+
+    <section class="stats" aria-label="Player statistics">
+      <div class="stat"><strong id="packsOpened">0</strong><span>Packs</span></div>
+      <div class="stat"><strong id="binderValue">$0.00</strong><span>Binder</span></div>
+      <div class="stat"><strong id="bestPull">—</strong><span>Best</span></div>
+    </section>
+
+    <div id="setsScreen" class="screen active">
+      <div class="toolbar">
+        <div class="mini">Offline mode: <strong>ON</strong></div>
+        <button id="backupButton" type="button">Backup data</button>
+      </div>
+      <div class="grid" id="setGrid"></div>
+    </div>
+
+    <div id="openScreen" class="screen">
+      <div class="open-panel">
+        <div class="open-top">
+          <button id="backButton" type="button">← Back</button>
+          <div class="mini">Current pack: <strong id="packNameLabel">—</strong></div>
+          <div class="mini">Value: <strong id="packValueLabel">$0.00</strong></div>
+        </div>
+
+        <div class="pack-stage">
+          <div class="pack-box" id="packBox" aria-label="Open pack">
+            <div class="label" id="packBoxLabel">Open</div>
+          </div>
+          <div class="card-deck" id="cardDeck"></div>
+        </div>
+
+        <div class="status-box" id="statusBox">
+          Tap the pack to open a random pull. Your binder saves automatically on this device.
+        </div>
+
+        <div class="actions">
+          <button id="openAgainButton" type="button">Open another pack</button>
+          <button id="openBinderButton" type="button">My binder</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="binderScreen" class="screen">
+      <div class="open-panel">
+        <div class="open-top">
+          <button id="binderBackButton" type="button">← Back</button>
+          <div class="mini">Binder</div>
+        </div>
+        <div class="binder-grid" id="binderGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'ethopen-offline-v1';
+    const DEFAULT_THEME = { accent: '#a78bfa' };
+
+    const SETS = [
+      {
+        id: 'starter',
+        name: 'Starter Set',
+        series: 'Core',
+        accent: '#7c3aed',
+        packSize: 5,
+        entries: [
+          { name: 'Bulbasaur', rarity: 'Common', type: 'Pokémon', price: 0.18 },
+          { name: 'Charmander', rarity: 'Common', type: 'Pokémon', price: 0.22 },
+          { name: 'Squirtle', rarity: 'Common', type: 'Pokémon', price: 0.24 },
+          { name: 'Pikachu', rarity: 'Uncommon', type: 'Pokémon', price: 0.55 },
+          { name: 'Raichu', rarity: 'Rare', type: 'Pokémon', price: 1.8 },
+          { name: 'Venusaur', rarity: 'Rare', type: 'Pokémon', price: 2.9 },
+          { name: 'Charizard', rarity: 'Holo', type: 'Pokémon', price: 6.4 },
+          { name: 'Blastoise', rarity: 'Holo', type: 'Pokémon', price: 5.3 },
+          { name: 'Mew', rarity: 'Ultra', type: 'Pokémon', price: 14 },
+          { name: 'Professor Oak', rarity: 'Trainer', type: 'Trainer', price: 0.7 }
+        ]
+      },
+      {
+        id: 'sunmoon',
+        name: 'Sun & Moon',
+        series: 'Alola',
+        accent: '#10b981',
+        packSize: 6,
+        entries: [
+          { name: 'Rowlet', rarity: 'Common', type: 'Pokémon', price: 0.2 },
+          { name: 'Litten', rarity: 'Common', type: 'Pokémon', price: 0.18 },
+          { name: 'Popplio', rarity: 'Common', type: 'Pokémon', price: 0.22 },
+          { name: 'Lycanroc', rarity: 'Uncommon', type: 'Pokémon', price: 0.9 },
+          { name: 'Decidueye', rarity: 'Rare', type: 'Pokémon', price: 2.1 },
+          { name: 'Incineroar', rarity: 'Rare', type: 'Pokémon', price: 2.6 },
+          { name: 'Primarina', rarity: 'Holo', type: 'Pokémon', price: 5.1 },
+          { name: 'Tapu Koko', rarity: 'Holo', type: 'Pokémon', price: 6.7 },
+          { name: 'Guzzlord', rarity: 'Ultra', type: 'Pokémon', price: 11.5 },
+          { name: 'Professor Kukui', rarity: 'Trainer', type: 'Trainer', price: 0.8 }
+        ]
+      },
+      {
+        id: 'sv',
+        name: 'Scarlet & Violet',
+        series: 'Paldea',
+        accent: '#f59e0b',
+        packSize: 7,
+        entries: [
+          { name: 'Sprigatito', rarity: 'Common', type: 'Pokémon', price: 0.2 },
+          { name: 'Fennekin', rarity: 'Common', type: 'Pokémon', price: 0.21 },
+          { name: 'Fuecoco', rarity: 'Common', type: 'Pokémon', price: 0.22 },
+          { name: 'Pawmot', rarity: 'Uncommon', type: 'Pokémon', price: 1.1 },
+          { name: 'Gyarados', rarity: 'Rare', type: 'Pokémon', price: 2.4 },
+          { name: 'Koraidon', rarity: 'Rare', type: 'Pokémon', price: 3.5 },
+          { name: 'Flutter Mane', rarity: 'Holo', type: 'Pokémon', price: 8.8 },
+          { name: 'Iron Bundle', rarity: 'Holo', type: 'Pokémon', price: 9.4 },
+          { name: 'Miraidon', rarity: 'Ultra', type: 'Pokémon', price: 15.5 },
+          { name: 'Professor Turo', rarity: 'Trainer', type: 'Trainer', price: 1.0 }
+        ]
+      },
+      {
+        id: '30th',
+        name: '30th Celebration',
+        series: 'Classic',
+        accent: '#ec4899',
+        packSize: 5,
+        entries: [
+          { name: 'Pikachu', rarity: 'Common', type: 'Pokémon', price: 0.55 },
+          { name: 'Raichu', rarity: 'Uncommon', type: 'Pokémon', price: 1.2 },
+          { name: 'Mewtwo', rarity: 'Rare', type: 'Pokémon', price: 4.5 },
+          { name: 'Gengar', rarity: 'Rare', type: 'Pokémon', price: 3.9 },
+          { name: 'Charizard', rarity: 'Holo', type: 'Pokémon', price: 8.2 },
+          { name: 'Blastoise', rarity: 'Holo', type: 'Pokémon', price: 7.6 },
+          { name: 'Mew', rarity: 'Ultra', type: 'Pokémon', price: 21 },
+          { name: 'Rainbow Rare', rarity: 'Ultra', type: 'Pokémon', price: 27 },
+          { name: 'Lucky Stadium', rarity: 'Trainer', type: 'Trainer', price: 1.3 },
+          { name: 'Team Rocket', rarity: 'Trainer', type: 'Trainer', price: 0.9 }
+        ]
+      }
+    ];
+
+    const state = loadState();
+    let selectedSet = null;
+
+    function loadState() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        return {
+          binder: raw.binder || {},
+          stats: raw.stats || { packs: 0, best: null },
+          theme: { ...DEFAULT_THEME, ...(raw.theme || {}) }
+        };
+      } catch (err) {
+        return { binder: {}, stats: { packs: 0, best: null }, theme: { ...DEFAULT_THEME } };
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        binder: state.binder,
+        stats: state.stats,
+        theme: state.theme
+      }));
+    }
+
+    function money(value) {
+      return '$' + Number(value || 0).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function applyTheme() {
+      document.documentElement.style.setProperty('--accent', state.theme.accent || DEFAULT_THEME.accent);
+      document.documentElement.style.setProperty('--accent-2', mixHex(state.theme.accent || DEFAULT_THEME.accent, '#7dd3fc', 0.5));
+    }
+
+    function mixHex(hexA, hexB, amount) {
+      const a = hexToRgb(hexA);
+      const b = hexToRgb(hexB);
+      const r = Math.round(a.r + (b.r - a.r) * amount);
+      const g = Math.round(a.g + (b.g - a.g) * amount);
+      const b2 = Math.round(a.b + (b.b - a.b) * amount);
+      return rgbToHex(r, g, b2);
+    }
+
+    function hexToRgb(hex) {
+      const clean = hex.replace('#', '');
+      const full = clean.length === 3 ? clean.split('').map(c => c + c).join('') : clean;
+      const num = parseInt(full, 16);
+      return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255
+      };
+    }
+
+    function rgbToHex(r, g, b) {
+      return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+    }
+
+    function cardSvg(card) {
+      const label = (card.name || 'Card').slice(0, 20);
+      const type = card.type || 'Pokémon';
+      const rarity = (card.rarity || 'Rare').toUpperCase();
+      const accent = card.accent || (state.theme.accent || DEFAULT_THEME.accent);
+      const svg = `
+        <svg xmlns='http://www.w3.org/2000/svg' width='640' height='900' viewBox='0 0 640 900'>
+          <defs>
+            <linearGradient id='g' x1='0' x2='1' y1='0' y2='1'>
+              <stop offset='0%' stop-color='${accent}'/>
+              <stop offset='30%' stop-color='#1a1038'/>
+              <stop offset='100%' stop-color='#090b16'/>
+            </linearGradient>
+          </defs>
+          <rect width='640' height='900' rx='42' fill='url(#g)'/>
+          <rect x='26' y='30' width='588' height='840' rx='30' fill='rgba(255,255,255,0.08)' stroke='rgba(255,255,255,0.2)'/>
+          <circle cx='320' cy='280' r='168' fill='rgba(255,255,255,0.08)'/>
+          <circle cx='320' cy='270' r='120' fill='rgba(255,255,255,0.14)'/>
+          <path d='M120 120h400v90H120z' fill='rgba(255,255,255,0.08)'/>
+          <text x='320' y='170' text-anchor='middle' fill='white' font-size='40' font-family='Arial, sans-serif' font-weight='900'>${escapeXml(label)}</text>
+          <text x='320' y='470' text-anchor='middle' fill='white' font-size='70' font-family='Arial, sans-serif' font-weight='900'>${escapeXml(type)}</text>
+          <text x='320' y='766' text-anchor='middle' fill='rgba(255,255,255,0.9)' font-size='32' font-family='Arial, sans-serif' font-weight='700'>${escapeXml(rarity)}</text>
+          <text x='320' y='820' text-anchor='middle' fill='rgba(255,255,255,0.9)' font-size='28' font-family='Arial, sans-serif' font-weight='600'>${escapeXml(card.number || '')}</text>
+        </svg>
+      `;
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    }
+
+    function escapeXml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    }
+
+    function buildSetCards(set) {
+      return set.entries.map((entry, index) => ({
+        id: `${set.id}-${index}-${entry.name}`,
+        setId: set.id,
+        setName: set.name,
+        name: entry.name,
+        rarity: entry.rarity,
+        type: entry.type,
+        number: `${index + 1}`,
+        price: entry.price,
+        accent: set.accent,
+        image: cardSvg({
+          name: entry.name,
+          type: entry.type,
+          rarity: entry.rarity,
+          number: `${index + 1}`,
+          accent: set.accent
+        })
+      }));
+    }
+
+    function getPackCards(set) {
+      const cards = buildSetCards(set);
+      const result = [];
+      for (let i = 0; i < set.packSize; i++) {
+        const r = Math.random();
+        let choice;
+        if (r < 0.58) choice = cards.filter(c => ['Common', 'Uncommon'].includes(c.rarity));
+        else if (r < 0.82) choice = cards.filter(c => ['Rare', 'Trainer'].includes(c.rarity));
+        else if (r < 0.94) choice = cards.filter(c => ['Holo'].includes(c.rarity));
+        else choice = cards.filter(c => ['Ultra'].includes(c.rarity));
+        const pool = choice.length ? choice : cards;
+        const card = pool[Math.floor(Math.random() * pool.length)];
+        result.push(card);
+      }
+      return result;
+    }
+
+    function renderSetGrid() {
+      const grid = document.getElementById('setGrid');
+      grid.innerHTML = '';
+      SETS.forEach((set) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'set-card';
+        button.style.setProperty('--pack-a', set.accent);
+        button.style.setProperty('--pack-b', mixHex(set.accent, '#130d24', 0.5));
+        button.innerHTML = `
+          <div class="pack-art" aria-hidden="true"></div>
+          <div class="pack-name">${set.name}</div>
+          <div class="pack-series">${set.series}</div>
+          <div class="pack-meta">${set.packSize} cards · offline</div>
+        `;
+        button.addEventListener('click', () => {
+          selectedSet = set;
+          document.getElementById('packNameLabel').textContent = set.name;
+          document.getElementById('packBox').style.setProperty('--pack-a', set.accent);
+          document.getElementById('packBox').style.setProperty('--pack-b', mixHex(set.accent, '#130d24', 0.5));
+          document.getElementById('packBoxLabel').textContent = 'Open';
+          document.getElementById('statusBox').textContent = 'Tap the pack to open a random pull. Your binder saves automatically on this device.';
+          showScreen('open');
+        });
+        grid.appendChild(button);
+      });
+    }
+
+    function renderStatPanel() {
+      document.getElementById('packsOpened').textContent = String(state.stats.packs || 0);
+      const binderValue = Object.values(state.binder).reduce((sum, item) => sum + (item.count * (item.price || 0)), 0);
+      document.getElementById('binderValue').textContent = money(binderValue);
+      const best = state.stats.best || null;
+      document.getElementById('bestPull').textContent = best ? money(best.value) : '—';
+    }
+
+    function showScreen(name) {
+      document.getElementById('setsScreen').classList.toggle('active', name === 'sets');
+      document.getElementById('openScreen').classList.toggle('active', name === 'open');
+      document.getElementById('binderScreen').classList.toggle('active', name === 'binder');
+    }
+
+    function addCardToBinder(card) {
+      const key = `${card.setId}:${card.id}`;
+      if (!state.binder[key]) {
+        state.binder[key] = { ...card, count: 0 };
+      }
+      state.binder[key].count += 1;
+      state.stats.packs = (state.stats.packs || 0) + 1;
+      if (!state.stats.best || card.price > state.stats.best.value) {
+        state.stats.best = { card: card.name, value: card.price, set: card.setName };
+      }
+      saveState();
+      renderStatPanel();
+    }
+
+    function renderBinder() {
+      const grid = document.getElementById('binderGrid');
+      const entries = Object.values(state.binder).sort((a, b) => b.count * b.price - a.count * a.price);
+      grid.innerHTML = '';
+
+      if (!entries.length) {
+        grid.innerHTML = '<div class="empty">Your binder is empty. Open a pack to start collecting cards.</div>';
+        return;
+      }
+
+      entries.forEach((item) => {
+        const el = document.createElement('div');
+        el.className = 'binder-item';
+        el.innerHTML = `
+          <div class="count-badge">${item.count}</div>
+          <img src="${item.image}" alt="${item.name}" />
+          <div class="binder-name">${item.name}</div>
+          <div class="binder-rarity">${item.rarity}</div>
+        `;
+        grid.appendChild(el);
+      });
+    }
+
+    function animateCards(cards) {
+      const deck = document.getElementById('cardDeck');
+      deck.innerHTML = '';
+      const cardEls = [];
+      cards.forEach((card, index) => {
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.style.backgroundImage = `url(${card.image})`;
+        el.style.left = '50%';
+        el.style.top = '50%';
+        el.style.setProperty('--rot', `${(index - (cards.length - 1) / 2) * 6}deg`);
+        el.style.setProperty('--scale', `${1 - index * 0.04}`);
+        el.style.transform = `translate(-50%, 0) rotate(${(index - (cards.length - 1) / 2) * 6}deg) scale(${1 - index * 0.04})`;
+        el.innerHTML = `<div class="card-text">${card.name}</div>`;
+        deck.appendChild(el);
+        cardEls.push(el);
+      });
+
+      requestAnimationFrame(() => {
+        cardEls.forEach((el, index) => {
+          const angle = (index - (cardEls.length - 1) / 2) * 6;
+          const shift = (index - (cardEls.length - 1) / 2) * 24;
+          const y = 10 + index * 2;
+          el.style.transform = `translate(${shift}px, ${y}px) rotate(${angle}deg) scale(${1 - index * 0.04})`;
+          el.classList.add('show');
+        });
+      });
+    }
+
+    function openPackFromSelectedSet() {
+      if (!selectedSet) return;
+      const knocked = getPackCards(selectedSet);
+      const packValue = knocked.reduce((sum, card) => sum + Number(card.price || 0), 0);
+      document.getElementById('packValueLabel').textContent = money(packValue);
+      animateCards(knocked);
+
+      const summary = knocked.slice().sort((a, b) => (b.price || 0) - (a.price || 0))[0];
+      const packSummary = knocked.map(card => `${card.name} (${card.rarity})`).join(', ');
+      document.getElementById('statusBox').innerHTML = `Pulled: <strong>${packSummary}</strong><br>Best card: <strong>${summary.name}</strong> for ${money(summary.price)}.`;
+
+      knocked.forEach(card => addCardToBinder(card));
+      renderBinder();
+      renderStatPanel();
+      document.getElementById('packBoxLabel').textContent = 'Opened';
+      document.getElementById('packBox').setAttribute('aria-label', 'Pack opened');
+    }
+
+    document.getElementById('packBox').addEventListener('click', () => {
+      if (!selectedSet) {
+        document.getElementById('statusBox').textContent = 'Pick a set first.';
+        showScreen('sets');
+        return;
+      }
+      openPackFromSelectedSet();
+    });
+
+    document.getElementById('backButton').addEventListener('click', () => {
+      showScreen('sets');
+    });
+
+    document.getElementById('binderBackButton').addEventListener('click', () => {
+      showScreen('sets');
+    });
+
+    document.getElementById('openAgainButton').addEventListener('click', () => {
+      if (!selectedSet) return;
+      document.getElementById('packBoxLabel').textContent = 'Open';
+      document.getElementById('statusBox').textContent = 'Tap the pack to open a random pull. Your binder saves automatically on this device.';
+      document.getElementById('cardDeck').innerHTML = '';
+      document.getElementById('packValueLabel').textContent = '$0.00';
+    });
+
+    document.getElementById('openBinderButton').addEventListener('click', () => {
+      renderBinder();
+      showScreen('binder');
+    });
+
+    document.getElementById('resetButton').addEventListener('click', () => {
+      const ok = window.confirm('Reset all saved binder stats and progress on this device?');
+      if (!ok) return;
+      state.binder = {};
+      state.stats = { packs: 0, best: null };
+      localStorage.removeItem(STORAGE_KEY);
+      saveState();
+      renderStatPanel();
+      renderBinder();
+      showScreen('sets');
+    });
+
+    document.getElementById('backupButton').addEventListener('click', async () => {
+      const data = JSON.stringify({ binder: state.binder, stats: state.stats, theme: state.theme }, null, 2);
+      try {
+        await navigator.clipboard.writeText(data);
+        window.alert('Backup copied to your clipboard. Paste it into a note or another browser to restore later.');
+      } catch (err) {
+        window.prompt('Copy this backup text manually:', data);
+      }
+    });
+
+    applyTheme();
+    renderSetGrid();
+    renderStatPanel();
+    renderBinder();
+    showScreen('sets');
+  </script>
+</body>
+</html>
